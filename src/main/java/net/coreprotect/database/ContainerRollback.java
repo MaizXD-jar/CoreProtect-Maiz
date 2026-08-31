@@ -18,6 +18,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
 
 import net.coreprotect.CoreProtect;
+import net.coreprotect.config.Config;
 import net.coreprotect.config.ConfigHandler;
 import net.coreprotect.consumer.Queue;
 import net.coreprotect.consumer.process.Process;
@@ -28,6 +29,7 @@ import net.coreprotect.model.BlockGroup;
 import net.coreprotect.thread.Scheduler;
 import net.coreprotect.utility.BlockUtils;
 import net.coreprotect.utility.Chat;
+import net.coreprotect.utility.Color;
 import net.coreprotect.utility.ItemUtils;
 import net.coreprotect.utility.MaterialUtils;
 
@@ -161,8 +163,11 @@ public class ContainerRollback extends Rollback {
                 Thread.sleep(5);
                 rollbackHashData = ConfigHandler.rollbackHash.get(finalUserString);
                 next = rollbackHashData[3];
-                if (sleepTime > 300000) {
+                if (sleepTime > Config.getGlobal().ROLLBACK_TIMEOUT * 1000) {
                     Chat.console(Phrase.build(Phrase.ROLLBACK_ABORTED));
+                    if (user != null) {
+                        Chat.sendMessage(user, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.ROLLBACK_ABORTED));
+                    }
                     break;
                 }
             }

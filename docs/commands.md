@@ -12,11 +12,12 @@ ___
 | [/co lookup](#co-lookup) | Lookup block data |
 | [/co rollback](#co-rollback) | Rollback block data |
 | [/co restore](#co-restore) | Restore block data |
+| [/co buildrestore](#co-buildrestore) | Restore a whole build/area to an earlier point in time |
 | [/co purge](#co-purge) | Delete old block data |
 | [/co reload](#co-reload) | Reload the configuration file |
 | [/co status](#co-status) | View the plugin status |
 | [/co consumer](#co-consumer) | Toggle consumer processing |
-| [/co migrate-db](#co-migrate-db) | Migrate between SQLite and MySQL |
+| [/co migrate-db](#co-migrate-db) | Migrate between SQLite, MySQL, and MariaDB |
 
 ### Alias Commands
 
@@ -89,6 +90,35 @@ Perform a restore. Uses the same [parameters](#parameters) as /co lookup.
 
 ---
 
+### /co buildrestore
+Restore a whole build/area to how it looked at an earlier point in time, in one step - for any player,
+not just one. Uses the same [parameters](#parameters) as /co rollback, but with two differences:
+
+* If no `u:<user>` is specified, it targets changes made by **any** player (no need to name one).
+* If no `r:<radius>` is specified, it uses the `buildrestore-radius` config value (default `50`)
+  instead of the smaller `default-radius` used by a normal rollback - a build usually needs more
+  coverage than a single griefer's mess.
+
+Like a plain `/co rollback` run without an `a:` filter, this restores blocks, container contents,
+signs, and entity kills together. Add `a:`/`i:`/`e:` to narrow it down, exactly as with rollback.
+
+| Command | Parameters |
+| --- | --- |
+| /co buildrestore | `u:<user> t:<time> r:<radius> a:<action> i:<include> e:<exclude>` |
+| /co br | *`/co buildrestore <params>`* |
+
+**Examples:**
+* `/co buildrestore t:3d` — restore everything within `buildrestore-radius` blocks of you to how it
+  was 3 days ago.
+* `/co buildrestore t:3d r:80 #preview` — preview the same restore over an 80-block radius first.
+* `/co buildrestore t:12h e:tnt` — restore the last 12 hours, ignoring TNT explosions.
+
+Every real (non-preview) rollback/restore/buildrestore is also recorded as a JSON line in
+`rollback-audit.jsonl` (in your CoreProtect folder), so you have a durable record of who ran what,
+where, over what time window, and how many rows were affected.
+
+---
+
 ### /co purge
 Purge old block data. Useful for freeing up space on your HDD if you don't need the older data.
 
@@ -130,13 +160,11 @@ Console command to pause or resume consumer queue processing.
 ___
 
 ### /co migrate-db
-Migrate your CoreProtect database between SQLite and MySQL. Console-only command.
+Migrate your CoreProtect database between SQLite, MySQL, and MariaDB. Console-only command.
 
 | Command | Parameters |
 | --- | --- |
-| /co migrate-db | `<sqlite|mysql>` |
-
-> **Note:** This feature is exclusive to CoreProtect 23.0+ Patreon builds for Patron supporters.
+| /co migrate-db | `<sqlite|mysql|mariadb>` |
 
 For complete migration instructions, safety guidelines, and troubleshooting information, see the [Database Migration documentation](/database-migration/).
 

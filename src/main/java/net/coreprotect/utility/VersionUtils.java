@@ -188,6 +188,12 @@ public class VersionUtils {
     public static void loadWorldEdit() {
         try {
             Plugin worldEdit = Bukkit.getServer().getPluginManager().getPlugin("WorldEdit");
+            if (worldEdit == null) {
+                // Defensive: avoids an NPE (silently swallowed by the catch below) if this is ever
+                // reached without the caller's own null/isEnabled guard.
+                return;
+            }
+
             String version = worldEdit.getDescription().getVersion();
             boolean validVersion;
             if (isFastAsyncWorldEdit(worldEdit)) {

@@ -40,6 +40,7 @@ public class Config extends Language {
     public String MYSQL_DATABASE;
     public String MYSQL_USERNAME;
     public String MYSQL_PASSWORD;
+    public String MYSQL_DRIVER;
     public String LANGUAGE;
     public String AUTO_PURGE;
     public boolean ENABLE_SSL;
@@ -95,6 +96,8 @@ public class Config extends Language {
     public int MYSQL_PORT;
     public int DEFAULT_RADIUS;
     public int MAX_RADIUS;
+    public int ROLLBACK_TIMEOUT;
+    public int BUILDRESTORE_RADIUS;
 
     static {
         DEFAULT_VALUES.put("donation-key", "");
@@ -105,6 +108,7 @@ public class Config extends Language {
         DEFAULT_VALUES.put("mysql-database", "database");
         DEFAULT_VALUES.put("mysql-username", "root");
         DEFAULT_VALUES.put("mysql-password", "");
+        DEFAULT_VALUES.put("mysql-driver", "mysql");
         DEFAULT_VALUES.put("language", "en");
         DEFAULT_VALUES.put("auto-purge", "false");
         DEFAULT_VALUES.put("check-updates", "true");
@@ -112,6 +116,8 @@ public class Config extends Language {
         DEFAULT_VALUES.put("verbose", "true");
         DEFAULT_VALUES.put("default-radius", "10");
         DEFAULT_VALUES.put("max-radius", "100");
+        DEFAULT_VALUES.put("rollback-timeout", "1800");
+        DEFAULT_VALUES.put("buildrestore-radius", "50");
         DEFAULT_VALUES.put("rollback-items", "true");
         DEFAULT_VALUES.put("rollback-entities", "true");
         DEFAULT_VALUES.put("skip-generic-data", "true");
@@ -150,6 +156,7 @@ public class Config extends Language {
 
         HEADERS.put("donation-key", new String[] { "# CoreProtect is donationware. Obtain a donation key from coreprotect.net/donate/" });
         HEADERS.put("use-mysql", new String[] { "# MySQL is optional and not required.", "# If you prefer to use MySQL, enable the following and fill out the fields." });
+        HEADERS.put("mysql-driver", new String[] { "# A MariaDB server already works with use-mysql (it speaks the same protocol).", "# Set this to \"mariadb\" to instead connect using the native MariaDB driver." });
         HEADERS.put("language", new String[] { "# If modified, will automatically attempt to translate languages phrases.", "# List of language codes: https://coreprotect.net/languages/" });
         HEADERS.put("auto-purge", new String[] { "# Automatically purge data older than the configured time.", "# Examples: 30d, 12w, 6mo. Set to false to disable." });
         HEADERS.put("check-updates", new String[] { "# If enabled, CoreProtect will check for updates when your server starts up.", "# If an update is available, you'll be notified via your server console.", });
@@ -157,6 +164,8 @@ public class Config extends Language {
         HEADERS.put("verbose", new String[] { "# If enabled, extra data is displayed during rollbacks and restores.", "# Can be manually triggered by adding \"#verbose\" to your rollback command." });
         HEADERS.put("default-radius", new String[] { "# If no radius is specified in a rollback or restore, this value will be", "# used as the radius. Set to \"0\" to disable automatically adding a radius." });
         HEADERS.put("max-radius", new String[] { "# The maximum radius that can be used in a command. Set to \"0\" to disable.", "# To run a rollback or restore without a radius, you can use \"r:#global\"." });
+        HEADERS.put("rollback-timeout", new String[] { "# The maximum time (in seconds) a rollback/restore will wait per chunk before", "# aborting. Increase this if large rollbacks/restores are being cut off early." });
+        HEADERS.put("buildrestore-radius", new String[] { "# Default radius used by /co buildrestore when no r: parameter is given.", "# Kept separate from default-radius since a whole-build restore usually", "# needs to cover more area than a typical single-griefer rollback." });
         HEADERS.put("rollback-items", new String[] { "# If enabled, items taken from containers (etc) will be included in rollbacks." });
         HEADERS.put("rollback-entities", new String[] { "# If enabled, entities, such as killed animals, will be included in rollbacks." });
         HEADERS.put("skip-generic-data", new String[] { "# If enabled, generic data, like zombies burning in daylight, won't be logged." });
@@ -214,6 +223,7 @@ public class Config extends Language {
         this.MYSQL_DATABASE = this.getString("mysql-database");
         this.MYSQL_USERNAME = this.getString("mysql-username");
         this.MYSQL_PASSWORD = this.getString("mysql-password");
+        this.MYSQL_DRIVER = this.getString("mysql-driver");
         this.LANGUAGE = this.getString("language");
         this.AUTO_PURGE = this.getString("auto-purge");
         this.CHECK_UPDATES = this.getBoolean("check-updates");
@@ -221,6 +231,8 @@ public class Config extends Language {
         this.VERBOSE = this.getBoolean("verbose");
         this.DEFAULT_RADIUS = this.getInt("default-radius");
         this.MAX_RADIUS = this.getInt("max-radius");
+        this.ROLLBACK_TIMEOUT = this.getInt("rollback-timeout", 1800);
+        this.BUILDRESTORE_RADIUS = this.getInt("buildrestore-radius", 50);
         this.ROLLBACK_ITEMS = this.getBoolean("rollback-items");
         this.ROLLBACK_ENTITIES = this.getBoolean("rollback-entities");
         this.SKIP_GENERIC_DATA = this.getBoolean("skip-generic-data");

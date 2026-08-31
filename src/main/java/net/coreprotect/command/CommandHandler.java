@@ -12,7 +12,6 @@ import net.coreprotect.language.Phrase;
 import net.coreprotect.thread.NetworkHandler;
 import net.coreprotect.utility.Chat;
 import net.coreprotect.utility.Color;
-import net.coreprotect.utility.Extensions;
 import net.coreprotect.utility.VersionUtils;
 
 public class CommandHandler implements CommandExecutor {
@@ -39,7 +38,7 @@ public class CommandHandler implements CommandExecutor {
                 }
                 boolean permission = false;
                 if (!permission) {
-                    if (user.hasPermission("coreprotect.rollback") && (corecommand.equals("rollback") || corecommand.equals("rb") || corecommand.equals("ro") || corecommand.equals("apply") || corecommand.equals("cancel"))) {
+                    if (user.hasPermission("coreprotect.rollback") && (corecommand.equals("rollback") || corecommand.equals("rb") || corecommand.equals("ro") || corecommand.equals("buildrestore") || corecommand.equals("br") || corecommand.equals("apply") || corecommand.equals("cancel"))) {
                         permission = true;
                     }
                     else if (user.hasPermission("coreprotect.restore") && (corecommand.equals("restore") || corecommand.equals("rs") || corecommand.equals("re") || corecommand.equals("undo") || corecommand.equals("apply") || corecommand.equals("cancel"))) {
@@ -79,6 +78,9 @@ public class CommandHandler implements CommandExecutor {
 
                 if (corecommand.equals("rollback") || corecommand.equals("restore") || corecommand.equals("rb") || corecommand.equals("rs") || corecommand.equals("ro") || corecommand.equals("re")) {
                     RollbackRestoreCommand.runCommand(user, command, permission, argumentArray, null, 0, 0);
+                }
+                else if (corecommand.equals("buildrestore") || corecommand.equals("br")) {
+                    BuildRestoreCommand.runCommand(user, command, permission, argumentArray, null, 0, 0);
                 }
                 else if (corecommand.equals("apply")) {
                     ApplyCommand.runCommand(user, command, permission, argumentArray);
@@ -120,12 +122,7 @@ public class CommandHandler implements CommandExecutor {
                     NetworkDebugCommand.runCommand(user, permission, argumentArray);
                 }
                 else if (corecommand.equals("migrate-db")) {
-                    if (!VersionUtils.validDonationKey()) {
-                        Chat.sendMessage(user, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.DONATION_KEY_REQUIRED));
-                    }
-                    else {
-                        Extensions.runDatabaseMigration(corecommand, user, argumentArray);
-                    }
+                    MigrateDbCommand.runCommand(user, user.hasPermission("coreprotect.reload"), argumentArray);
                 }
                 else {
                     Chat.sendMessage(user, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.COMMAND_NOT_FOUND, Color.WHITE, "/co " + corecommand));

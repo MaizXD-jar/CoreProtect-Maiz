@@ -22,7 +22,7 @@ import net.coreprotect.config.ConfigHandler;
 public class TabHandler implements TabCompleter {
 
     // private static String[] COMMANDS = new String[] { "help", "inspect", "rollback", "restore", "lookup", "purge", "reload", "status", "near", "undo" }; // max 10!
-    private static final String[] HELP = new String[] { "inspect", "rollback", "restore", "lookup", "purge", "teleport", "status", "params", "users", "time", "radius", "action", "include", "exclude" };
+    private static final String[] HELP = new String[] { "inspect", "rollback", "restore", "buildrestore", "lookup", "purge", "teleport", "status", "params", "users", "time", "radius", "action", "include", "exclude" };
     private static final String[] PARAMS = new String[] { "user:", "time:", "radius:", "action:", "include:", "exclude:", "#container" };
     private static final String[] ACTIONS = new String[] { "block", "+block", "-block", "click", "kill", "+container", "-container", "container", "chat", "command", "+inventory", "-inventory", "inventory", "item", "+item", "-item", "sign", "session", "+session", "-session", "username" };
     private static final String[] NUMBERS = new String[] { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" };
@@ -85,6 +85,7 @@ public class TabHandler implements TabCompleter {
         addCompletionIfPermitted(sender, "coreprotect.inspect", "inspect", completions);
         addCompletionIfPermitted(sender, "coreprotect.rollback", "rollback", completions);
         addCompletionIfPermitted(sender, "coreprotect.restore", "restore", completions);
+        addCompletionIfPermitted(sender, "coreprotect.rollback", "buildrestore", completions);
         addCompletionIfPermitted(sender, "coreprotect.lookup", "lookup", completions);
         addCompletionIfPermitted(sender, "coreprotect.purge", "purge", completions);
         addCompletionIfPermitted(sender, "coreprotect.reload", "reload", completions);
@@ -118,7 +119,7 @@ public class TabHandler implements TabCompleter {
     }
 
     private boolean hasLookupCommand(String cmd, CommandSender sender) {
-        return (sender.hasPermission("coreprotect.lookup") && (cmd.equals("l") || cmd.equals("lookup"))) || (sender.hasPermission("coreprotect.rollback") && (cmd.equals("rollback") || cmd.equals("rb") || cmd.equals("ro"))) || (sender.hasPermission("coreprotect.restore") && (cmd.equals("restore") || cmd.equals("rs") || cmd.equals("re")));
+        return (sender.hasPermission("coreprotect.lookup") && (cmd.equals("l") || cmd.equals("lookup"))) || (sender.hasPermission("coreprotect.rollback") && (cmd.equals("rollback") || cmd.equals("rb") || cmd.equals("ro") || cmd.equals("buildrestore") || cmd.equals("br"))) || (sender.hasPermission("coreprotect.restore") && (cmd.equals("restore") || cmd.equals("rs") || cmd.equals("re")));
     }
 
     private boolean isActionParam(String lastArg, String currentArg) {

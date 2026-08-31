@@ -28,6 +28,10 @@ public class RollbackComplete {
                 return;
             }
 
+            if (preview == 0) {
+                RollbackAuditLog.record(user, location, checkUsers, restrictList, excludeList, excludeUserList, actionList, timeString, chunkCount, seconds, itemCount, blockCount, entityCount, rollbackType, radius);
+            }
+
             Chat.sendMessage(user, "-----");
 
             StringBuilder usersBuilder = new StringBuilder();
