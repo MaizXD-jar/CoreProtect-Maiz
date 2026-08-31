@@ -214,7 +214,7 @@ public class ConfigHandler extends Queue {
         }
     }
 
-    private static void loadConfig() {
+    public static void loadConfig() {
         try {
             Config.init();
             ConfigFile.init(ConfigFile.LANGUAGE); // load user phrases
