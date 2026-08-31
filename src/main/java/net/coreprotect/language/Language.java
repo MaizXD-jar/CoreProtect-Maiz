@@ -224,10 +224,14 @@ public class Language {
         phrases.put(Phrase.STATUS_AUTO_PURGE, "Cleanup: {0} {row|rows} auto purged since restart.");
         phrases.put(Phrase.STATUS_CONSUMER, "Consumer: {0} {item|items} in queue.");
         phrases.put(Phrase.STATUS_DATABASE, "Database: Using {0}.");
+        phrases.put(Phrase.STATUS_DATABASE_LATENCY, "Database latency: {0}ms.");
+        phrases.put(Phrase.STATUS_DATABASE_SIZE, "Database size: {0}.");
         phrases.put(Phrase.STATUS_INTEGRATION, "{0}: Integration {enabled|disabled}.");
         phrases.put(Phrase.STATUS_INTEGRATION_VERSION, "Detected version: {0} (check console for compatibility warnings).");
         phrases.put(Phrase.STATUS_LICENSE, "License: {0}");
+        phrases.put(Phrase.STATUS_ROWS_WRITTEN, "Rows written since startup: {0}.");
         phrases.put(Phrase.STATUS_SYSTEM, "System: {0}");
+        phrases.put(Phrase.STATUS_THROUGHPUT, "Write rate: {0} rows/sec (last flush: {1}ms).");
         phrases.put(Phrase.STATUS_VERSION, "Version: {0}");
         phrases.put(Phrase.TELEPORTED, "Teleported to {0}.");
         phrases.put(Phrase.TELEPORTED_SAFETY, "Teleported you to safety.");

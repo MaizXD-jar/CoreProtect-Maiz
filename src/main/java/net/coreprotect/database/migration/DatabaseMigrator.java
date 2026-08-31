@@ -212,7 +212,12 @@ public class DatabaseMigrator {
                 Class.forName("com.mysql.jdbc.Driver");
             }
 
-            String url = (target.mariaDbDriver ? "jdbc:mariadb://" : "jdbc:mysql://") + target.host + ":" + target.port + "/" + target.database + "?useUnicode=true&characterEncoding=UTF-8&allowPublicKeyRetrieval=true&useSSL=" + Config.getGlobal().ENABLE_SSL + (target.mariaDbDriver ? "" : "&rewriteBatchedStatements=true");
+            // Option names differ between the two drivers; allowPublicKeyRetrieval and
+            // rewriteBatchedStatements are Connector/J-only.
+            String parameters = target.mariaDbDriver
+                    ? "?useUnicode=true&characterEncoding=UTF-8&sslMode=" + (Config.getGlobal().ENABLE_SSL ? "trust" : "disable")
+                    : "?useUnicode=true&characterEncoding=UTF-8&allowPublicKeyRetrieval=true&rewriteBatchedStatements=true&useSSL=" + Config.getGlobal().ENABLE_SSL;
+            String url = (target.mariaDbDriver ? "jdbc:mariadb://" : "jdbc:mysql://") + target.host + ":" + target.port + "/" + target.database + parameters;
             connection = DriverManager.getConnection(url, target.username, target.password);
         }
         else {

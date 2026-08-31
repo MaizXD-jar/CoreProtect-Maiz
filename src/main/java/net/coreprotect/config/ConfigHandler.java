@@ -3,6 +3,7 @@ package net.coreprotect.config;
 import java.io.File;
 import java.io.RandomAccessFile;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -302,21 +303,30 @@ public class ConfigHandler extends Queue {
                 }
             }
 
+            createDatabaseIfMissing(mariaDbDriver);
+
             config.setJdbcUrl((mariaDbDriver ? "jdbc:mariadb://" : "jdbc:mysql://") + ConfigHandler.host + ":" + ConfigHandler.port + "/" + ConfigHandler.database);
             config.setUsername(ConfigHandler.username);
             config.setPassword(ConfigHandler.password);
             config.setMaximumPoolSize(ConfigHandler.maximumPoolSize);
+            // Logging is a single writer, so pinning maximum-pool-size connections open all the time
+            // just wastes server-side resources; the pool grows on demand during bursts.
+            config.setMinimumIdle(Math.min(Config.getGlobal().MINIMUM_IDLE, ConfigHandler.maximumPoolSize));
             config.setMaxLifetime(60000);
+            // connectionTimeout is a HikariCP setting, not a driver property - passed as a
+            // dataSourceProperty the driver just ignored it and the pool kept its 30s default.
+            config.setConnectionTimeout(10000);
+            config.setPoolName("CoreProtect");
             config.addDataSourceProperty("characterEncoding", "UTF-8");
-            config.addDataSourceProperty("connectionTimeout", "10000");
-            config.addDataSourceProperty("allowPublicKeyRetrieval", "true");
 
             if (mariaDbDriver) {
-                // Conservative option set for org.mariadb.jdbc.Driver - it doesn't share
-                // Connector/J's dataSourceProperty names, so the MySQL tuning below doesn't apply.
-                config.addDataSourceProperty("useSsl", Config.getGlobal().ENABLE_SSL);
+                // Deliberately minimal for org.mariadb.jdbc.Driver: it doesn't share Connector/J's
+                // option names, and allowPublicKeyRetrieval below only exists for MySQL 8's
+                // caching_sha2_password handshake, which a MariaDB server never performs.
+                config.addDataSourceProperty("sslMode", Config.getGlobal().ENABLE_SSL ? "trust" : "disable");
             }
             else {
+                config.addDataSourceProperty("allowPublicKeyRetrieval", "true");
                 /* https://github.com/brettwooldridge/HikariCP/wiki/MySQL-Configuration */
                 /* https://cdn.oreillystatic.com/en/assets/1/event/21/Connector_J%20Performance%20Gems%20Presentation.pdf */
                 config.addDataSourceProperty("cachePrepStmts", "true");
@@ -335,6 +345,35 @@ public class ConfigHandler extends Queue {
         }
 
         Database.createDatabaseTables(ConfigHandler.prefix, false, null, Config.getGlobal().MYSQL, false);
+    }
+
+    /**
+     * Creates the configured MySQL/MariaDB database if it doesn't exist yet, by connecting to the
+     * server without selecting a schema. Best effort: if the user lacks the CREATE privilege or the
+     * server is unreachable, the connection pool reports the real problem a moment later.
+     */
+    private static void createDatabaseIfMissing(boolean mariaDbDriver) {
+        if (!Config.getGlobal().CREATE_DATABASE) {
+            return;
+        }
+
+        String database = ConfigHandler.database;
+        // Database names are backtick-quoted below, so restrict them to characters that can't break
+        // out of the quoting rather than trying to escape arbitrary input into DDL.
+        if (database == null || !database.matches("[A-Za-z0-9_$-]{1,64}")) {
+            Chat.console("[CoreProtect] Not creating database \"" + database + "\" automatically; please create it manually.");
+            return;
+        }
+
+        String parameters = mariaDbDriver ? "?sslMode=" + (Config.getGlobal().ENABLE_SSL ? "trust" : "disable") : "?allowPublicKeyRetrieval=true&useSSL=" + Config.getGlobal().ENABLE_SSL;
+        String url = (mariaDbDriver ? "jdbc:mariadb://" : "jdbc:mysql://") + ConfigHandler.host + ":" + ConfigHandler.port + "/" + parameters;
+        try (Connection connection = DriverManager.getConnection(url, ConfigHandler.username, ConfigHandler.password); Statement statement = connection.createStatement()) {
+            statement.executeUpdate("CREATE DATABASE IF NOT EXISTS `" + database + "` CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci");
+        }
+        catch (Exception e) {
+            // Nothing to do here - if this mattered, connecting to the database fails next with a
+            // clearer error than anything this could report.
+        }
     }
 
     public static void loadMaterials(Statement statement) {
