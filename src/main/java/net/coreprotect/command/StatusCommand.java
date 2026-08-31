@@ -4,6 +4,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
 
 import net.coreprotect.CoreProtect;
@@ -80,8 +81,12 @@ public class StatusCommand {
                     if (ConfigHandler.worldeditEnabled) {
                         Chat.sendMessage(player, Color.DARK_AQUA + Phrase.build(Phrase.STATUS_INTEGRATION, Color.WHITE, "WorldEdit", Selector.FIRST));
                     }
-                    else if (instance.getServer().getPluginManager().getPlugin("WorldEdit") != null) {
-                        Chat.sendMessage(player, Color.DARK_AQUA + Phrase.build(Phrase.STATUS_INTEGRATION, Color.WHITE, "WorldEdit", Selector.SECOND));
+                    else {
+                        Plugin worldEditPlugin = instance.getServer().getPluginManager().getPlugin("WorldEdit");
+                        if (worldEditPlugin != null) {
+                            Chat.sendMessage(player, Color.DARK_AQUA + Phrase.build(Phrase.STATUS_INTEGRATION, Color.WHITE, "WorldEdit", Selector.SECOND));
+                            Chat.sendMessage(player, Color.DARK_AQUA + Phrase.build(Phrase.STATUS_INTEGRATION_VERSION, Color.WHITE, worldEditPlugin.getDescription().getVersion()));
+                        }
                     }
 
                     try {

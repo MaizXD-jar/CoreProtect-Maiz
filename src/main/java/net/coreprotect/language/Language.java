@@ -66,6 +66,8 @@ public class Language {
         phrases.put(Phrase.GLOBAL_ROLLBACK, "Use \"{0}\" to do a global {rollback|restore}");
         phrases.put(Phrase.HELP_ACTION_1, "Restrict the lookup to a certain action.");
         phrases.put(Phrase.HELP_ACTION_2, "Examples: [a:block], [a:+block], [a:-block] [a:click], [a:container], [a:inventory], [a:item], [a:kill], [a:chat], [a:command], [a:sign], [a:session], [a:username]");
+        phrases.put(Phrase.HELP_BUILDRESTORE_1, "Same u:/t:/r:/a:/i:/e: parameters as rollback, but defaults to any player and a larger radius (buildrestore-radius).");
+        phrases.put(Phrase.HELP_BUILDRESTORE_COMMAND, "Restore a whole build/area to an earlier point in time.");
         phrases.put(Phrase.HELP_COMMAND, "Display more info for that command.");
         phrases.put(Phrase.HELP_EXCLUDE_1, "Exclude blocks/users.");
         phrases.put(Phrase.HELP_EXCLUDE_2, "Examples: [e:stone], [e:Notch], [e:stone,Notch]");
@@ -153,6 +155,12 @@ public class Language {
         phrases.put(Phrase.LOOKUP_TIME, "{0} ago");
         phrases.put(Phrase.LOOKUP_USERNAME, "{0} logged in as {1}.");
         phrases.put(Phrase.MAXIMUM_RADIUS, "The maximum {lookup|rollback|restore} radius is {0}.");
+        phrases.put(Phrase.MIGRATION_CONFIG_NOT_READY, "Update config.yml to point at the new database first, then run this command again without restarting or reloading.");
+        phrases.put(Phrase.MIGRATION_FAILED, "Migration failed - check the console for details. Your original database has not been modified.");
+        phrases.put(Phrase.MIGRATION_PROGRESS, "Migrated {0}: {1} rows.");
+        phrases.put(Phrase.MIGRATION_SAME_TYPE, "The database is already using that type.");
+        phrases.put(Phrase.MIGRATION_STARTED, "Starting database migration. This may take a while - please don't stop the server.");
+        phrases.put(Phrase.MIGRATION_SUCCESS, "Migration complete: {0} rows in {1} seconds. Now using the new database.");
         phrases.put(Phrase.MISSING_ACTION_USER, "To use that action, please specify a user.");
         phrases.put(Phrase.MISSING_LOOKUP_TIME, "Please specify the amount of time to {lookup|rollback|restore}.");
         phrases.put(Phrase.MISSING_LOOKUP_USER, "Please specify a user or {block|radius} to lookup.");
@@ -217,6 +225,7 @@ public class Language {
         phrases.put(Phrase.STATUS_CONSUMER, "Consumer: {0} {item|items} in queue.");
         phrases.put(Phrase.STATUS_DATABASE, "Database: Using {0}.");
         phrases.put(Phrase.STATUS_INTEGRATION, "{0}: Integration {enabled|disabled}.");
+        phrases.put(Phrase.STATUS_INTEGRATION_VERSION, "Detected version: {0} (check console for compatibility warnings).");
         phrases.put(Phrase.STATUS_LICENSE, "License: {0}");
         phrases.put(Phrase.STATUS_SYSTEM, "System: {0}");
         phrases.put(Phrase.STATUS_VERSION, "Version: {0}");

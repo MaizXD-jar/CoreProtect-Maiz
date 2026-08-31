@@ -277,34 +277,59 @@ public class ConfigHandler extends Queue {
         }
         else {
             HikariConfig config = new HikariConfig();
-            try {
-                Class.forName("com.mysql.cj.jdbc.Driver");
-                config.setDriverClassName("com.mysql.cj.jdbc.Driver");
-            }
-            catch (Exception e) {
-                config.setDriverClassName("com.mysql.jdbc.Driver");
+
+            // A MariaDB server works fine over the standard MySQL driver/URL (same wire protocol);
+            // "mariadb" only opts into the dedicated driver for users who specifically want it.
+            boolean mariaDbDriver = "mariadb".equalsIgnoreCase(Config.getGlobal().MYSQL_DRIVER);
+            if (mariaDbDriver) {
+                try {
+                    Class.forName("org.mariadb.jdbc.Driver");
+                    config.setDriverClassName("org.mariadb.jdbc.Driver");
+                }
+                catch (Exception e) {
+                    mariaDbDriver = false;
+                    Chat.console("[CoreProtect] mariadb-java-client driver not found; falling back to the MySQL driver.");
+                }
             }
 
-            config.setJdbcUrl("jdbc:mysql://" + ConfigHandler.host + ":" + ConfigHandler.port + "/" + ConfigHandler.database);
+            if (!mariaDbDriver) {
+                try {
+                    Class.forName("com.mysql.cj.jdbc.Driver");
+                    config.setDriverClassName("com.mysql.cj.jdbc.Driver");
+                }
+                catch (Exception e) {
+                    config.setDriverClassName("com.mysql.jdbc.Driver");
+                }
+            }
+
+            config.setJdbcUrl((mariaDbDriver ? "jdbc:mariadb://" : "jdbc:mysql://") + ConfigHandler.host + ":" + ConfigHandler.port + "/" + ConfigHandler.database);
             config.setUsername(ConfigHandler.username);
             config.setPassword(ConfigHandler.password);
             config.setMaximumPoolSize(ConfigHandler.maximumPoolSize);
             config.setMaxLifetime(60000);
             config.addDataSourceProperty("characterEncoding", "UTF-8");
             config.addDataSourceProperty("connectionTimeout", "10000");
-            /* https://github.com/brettwooldridge/HikariCP/wiki/MySQL-Configuration */
-            /* https://cdn.oreillystatic.com/en/assets/1/event/21/Connector_J%20Performance%20Gems%20Presentation.pdf */
-            config.addDataSourceProperty("cachePrepStmts", "true");
-            config.addDataSourceProperty("prepStmtCacheSize", "250");
-            config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
-            config.addDataSourceProperty("useServerPrepStmts", "true");
-            config.addDataSourceProperty("useLocalSessionState", "true");
-            config.addDataSourceProperty("rewriteBatchedStatements", "true");
-            config.addDataSourceProperty("cacheServerConfiguration", "true");
-            config.addDataSourceProperty("maintainTimeStats", "false");
-            /* Disable SSL to suppress the unverified server identity warning */
             config.addDataSourceProperty("allowPublicKeyRetrieval", "true");
-            config.addDataSourceProperty("useSSL", Config.getGlobal().ENABLE_SSL);
+
+            if (mariaDbDriver) {
+                // Conservative option set for org.mariadb.jdbc.Driver - it doesn't share
+                // Connector/J's dataSourceProperty names, so the MySQL tuning below doesn't apply.
+                config.addDataSourceProperty("useSsl", Config.getGlobal().ENABLE_SSL);
+            }
+            else {
+                /* https://github.com/brettwooldridge/HikariCP/wiki/MySQL-Configuration */
+                /* https://cdn.oreillystatic.com/en/assets/1/event/21/Connector_J%20Performance%20Gems%20Presentation.pdf */
+                config.addDataSourceProperty("cachePrepStmts", "true");
+                config.addDataSourceProperty("prepStmtCacheSize", "250");
+                config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+                config.addDataSourceProperty("useServerPrepStmts", "true");
+                config.addDataSourceProperty("useLocalSessionState", "true");
+                config.addDataSourceProperty("rewriteBatchedStatements", "true");
+                config.addDataSourceProperty("cacheServerConfiguration", "true");
+                config.addDataSourceProperty("maintainTimeStats", "false");
+                /* Disable SSL to suppress the unverified server identity warning */
+                config.addDataSourceProperty("useSSL", Config.getGlobal().ENABLE_SSL);
+            }
 
             ConfigHandler.hikariDataSource = new HikariDataSource(config);
         }

@@ -60,6 +60,11 @@ public class HelpCommand {
                     Chat.sendMessage(player, Color.DARK_AQUA + "| " + Color.GREY + "e:<exclude> " + Color.WHITE + "- " + Phrase.build(Phrase.HELP_PARAMS_7, Selector.THIRD));
                     Chat.sendMessage(player, Color.GREY + Color.ITALIC + Phrase.build(Phrase.HELP_PARAMETER, "/co help <param>"));
                 }
+                else if (helpcommand.equals("buildrestore") || helpcommand.equals("br")) {
+                    Chat.sendMessage(player, Color.DARK_AQUA + "/co buildrestore " + Color.GREY + "<params> " + Color.WHITE + "- " + Phrase.build(Phrase.HELP_BUILDRESTORE_COMMAND));
+                    Chat.sendMessage(player, Color.GREY + Color.ITALIC + Phrase.build(Phrase.HELP_BUILDRESTORE_1));
+                    Chat.sendMessage(player, Color.GREY + Color.ITALIC + Phrase.build(Phrase.HELP_PARAMETER, "/co help params"));
+                }
                 else if (helpcommand.equals("lookup") || helpcommand.equals("lookups") || helpcommand.equals("l")) {
                     Chat.sendMessage(player, Color.DARK_AQUA + "/co lookup <params>");
                     Chat.sendMessage(player, Color.DARK_AQUA + "/co l <params> " + Color.WHITE + "- " + Phrase.build(Phrase.HELP_LOOKUP_1));
@@ -119,6 +124,7 @@ public class HelpCommand {
                 Chat.sendMessage(player, Color.DARK_AQUA + "/co " + Color.GREY + "inspect " + Color.WHITE + "- " + Phrase.build(Phrase.HELP_INSPECT_COMMAND));
                 Chat.sendMessage(player, Color.DARK_AQUA + "/co " + Color.GREY + "rollback " + Color.DARK_AQUA + "<params> " + Color.WHITE + "- " + Phrase.build(Phrase.HELP_ROLLBACK_COMMAND));
                 Chat.sendMessage(player, Color.DARK_AQUA + "/co " + Color.GREY + "restore " + Color.DARK_AQUA + "<params> " + Color.WHITE + "- " + Phrase.build(Phrase.HELP_RESTORE_COMMAND));
+                Chat.sendMessage(player, Color.DARK_AQUA + "/co " + Color.GREY + "buildrestore " + Color.DARK_AQUA + "<params> " + Color.WHITE + "- " + Phrase.build(Phrase.HELP_BUILDRESTORE_COMMAND));
                 Chat.sendMessage(player, Color.DARK_AQUA + "/co " + Color.GREY + "lookup " + Color.DARK_AQUA + "<params> " + Color.WHITE + "- " + Phrase.build(Phrase.HELP_LOOKUP_COMMAND));
                 Chat.sendMessage(player, Color.DARK_AQUA + "/co " + Color.GREY + "purge " + Color.DARK_AQUA + "<params> " + Color.WHITE + "- " + Phrase.build(Phrase.HELP_PURGE_COMMAND));
                 Chat.sendMessage(player, Color.DARK_AQUA + "/co " + Color.GREY + "reload " + Color.WHITE + "- " + Phrase.build(Phrase.HELP_RELOAD_COMMAND));

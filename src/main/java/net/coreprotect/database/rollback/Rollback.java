@@ -263,6 +263,9 @@ public class Rollback extends RollbackUtil {
                 if (ConfigHandler.isFolia) {
                     if (!awaitChunkTasks(chunkFutures, preview)) {
                         Chat.console(Phrase.build(Phrase.ROLLBACK_ABORTED));
+                        if (user != null) {
+                            Chat.sendMessage(user, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.ROLLBACK_ABORTED));
+                        }
                         break;
                     }
                 }
@@ -289,7 +292,7 @@ public class Rollback extends RollbackUtil {
                         next = rollbackHashData[3];
                         scannedWorlds = rollbackHashData[4];
 
-                        if (sleepTime > 300000) {
+                        if (sleepTime > Config.getGlobal().ROLLBACK_TIMEOUT * 1000) {
                             abort = 1;
                             break;
                         }
@@ -298,6 +301,9 @@ public class Rollback extends RollbackUtil {
 
                 if (abort == 1 || next == 2) {
                     Chat.console(Phrase.build(Phrase.ROLLBACK_ABORTED));
+                    if (user != null) {
+                        Chat.sendMessage(user, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.ROLLBACK_ABORTED));
+                    }
                     break;
                 }
 
@@ -380,7 +386,7 @@ public class Rollback extends RollbackUtil {
 
             int delay = preview == 1 ? 1 : 5;
             sleepTime += delay;
-            if (sleepTime > 300000) {
+            if (sleepTime > Config.getGlobal().ROLLBACK_TIMEOUT * 1000) {
                 return false;
             }
             Thread.sleep(delay);

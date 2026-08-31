@@ -199,6 +199,7 @@ public class Database extends Queue {
 
                 String database = "jdbc:sqlite:" + ConfigHandler.path + ConfigHandler.sqlite + "";
                 connection = DriverManager.getConnection(database);
+                applySQLitePragmas(connection);
 
                 ConfigHandler.databaseReachable = true;
             }
@@ -208,6 +209,23 @@ public class Database extends Queue {
         }
 
         return connection;
+    }
+
+    // SQLite session settings (synchronous/cache_size/temp_store/busy_timeout) aren't persisted in the
+    // database file, unlike journal_mode - they must be re-applied on every new connection, and this is
+    // the single choke point all SQLite connections (consumer, lookups, rollbacks, purge) go through.
+    public static void applySQLitePragmas(Connection connection) {
+        try (Statement pragmaStatement = connection.createStatement()) {
+            // synchronous=NORMAL only guarantees durability when paired with WAL - with the legacy
+            // rollback-journal mode (disable-wal), keep the slower but crash-safe FULL setting.
+            pragmaStatement.executeUpdate("PRAGMA synchronous=" + (Config.getGlobal().DISABLE_WAL ? "FULL" : "NORMAL"));
+            pragmaStatement.executeUpdate("PRAGMA busy_timeout=30000");
+            pragmaStatement.executeUpdate("PRAGMA temp_store=MEMORY");
+            pragmaStatement.executeUpdate("PRAGMA cache_size=-20000");
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static void closeConnection() {
