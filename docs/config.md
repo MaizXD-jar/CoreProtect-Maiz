@@ -2,6 +2,33 @@
 
 The CoreProtect configuration file can be found within the CoreProtect folder, at `config.yml`.
 
+## Performance Tuning
+
+These options control how logged data reaches the database. The defaults are sensible for most
+servers - change them only if `/co status` shows a problem.
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `batch-size` | `500` | Rows written per transaction. Logging is batched, so a large burst (a WorldEdit paste, an explosion chain) is committed in chunks of this size instead of accumulating into one enormous transaction. Reasonable range: 250-1000. |
+| `flush-interval` | `500` | Milliseconds the consumer waits between write cycles. Lower gets data into the database sooner at the cost of more commits. |
+| `maximum-pool-size` | `10` | Maximum MySQL/MariaDB connections. Logging is a single writer, so this mostly covers concurrent lookups - dozens of connections buy nothing. |
+| `minimum-idle` | `2` | Idle connections kept open. The pool grows to `maximum-pool-size` during bursts and shrinks back afterwards. |
+| `rollback-timeout` | `1800` | Seconds a rollback/restore will wait per chunk before aborting. Raise it if large restores are being cut off. |
+| `create-database` | `true` | Create the MySQL/MariaDB database on startup if it doesn't exist. Requires the CREATE privilege. |
+| `mysql-driver` | `mysql` | Set to `mariadb` to connect using the native MariaDB driver. A MariaDB server also works fine with the default MySQL driver, since it speaks the same protocol. |
+| `disable-wal` | `false` | SQLite only. WAL is faster and is what lets CoreProtect run `synchronous=NORMAL` safely; turning it off falls back to the slower, fully-synchronous rollback journal. |
+
+### Checking whether the database is keeping up
+
+`/co status` (also `/co stats`) reports the live write path:
+
+* **Consumer** - how many logged actions are still queued. A number that keeps climbing means the
+  database can't keep pace with the server.
+* **Write rate** - rows per second currently being written, plus how long the last commit took.
+* **Rows written since startup** - total throughput this session.
+* **Database latency / size** - round-trip time for a trivial query, and how much space the data
+  occupies on disk.
+
 ## Per-World Configuration
 
 If you'd like to modify the logging settings for a specific world, simply do the following:

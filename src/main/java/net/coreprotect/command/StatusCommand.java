@@ -1,5 +1,10 @@
 package net.coreprotect.command;
 
+import java.io.File;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.bukkit.command.CommandSender;
@@ -11,7 +16,9 @@ import net.coreprotect.CoreProtect;
 import net.coreprotect.config.Config;
 import net.coreprotect.config.ConfigHandler;
 import net.coreprotect.consumer.Consumer;
+import net.coreprotect.consumer.ConsumerMetrics;
 import net.coreprotect.consumer.process.Process;
+import net.coreprotect.database.Database;
 import net.coreprotect.language.Phrase;
 import net.coreprotect.language.Selector;
 import net.coreprotect.patch.Patch;
@@ -107,10 +114,15 @@ public class StatusCommand {
                         }
 
                         Chat.sendMessage(player, Color.DARK_AQUA + Phrase.build(Phrase.STATUS_CONSUMER, Color.WHITE, String.format("%,d", consumerCount), (consumerCount == 1 ? Selector.FIRST : Selector.SECOND)));
+                        Chat.sendMessage(player, Color.DARK_AQUA + Phrase.build(Phrase.STATUS_THROUGHPUT, Color.WHITE, String.format("%,.0f", ConsumerMetrics.getRowsPerSecond()), String.format("%.1f", ConsumerMetrics.getLastFlushMillis())));
+                        Chat.sendMessage(player, Color.DARK_AQUA + Phrase.build(Phrase.STATUS_ROWS_WRITTEN, Color.WHITE, String.format("%,d", ConsumerMetrics.getTotalRows())));
                     }
                     catch (Exception e) {
                         e.printStackTrace();
                     }
+
+                    // Safe to query here: this whole block already runs on its own thread.
+                    sendDatabaseMetrics(player);
 
                     long autoPurgeRowsPurged = ConfigHandler.autoPurgeRowsPurged.get();
                     Chat.sendMessage(player, Color.DARK_AQUA + Phrase.build(Phrase.STATUS_AUTO_PURGE, Color.WHITE, String.format("%,d", autoPurgeRowsPurged), (autoPurgeRowsPurged == 1 ? Selector.FIRST : Selector.SECOND)));
@@ -188,5 +200,75 @@ public class StatusCommand {
         Runnable runnable = new BasicThread();
         Thread thread = new Thread(runnable);
         thread.start();
+    }
+
+    /**
+     * Reports database round-trip latency and on-disk size. Deliberately avoids COUNT(*), which
+     * would scan hundreds of millions of rows on a busy server just to render a status line.
+     */
+    private static void sendDatabaseMetrics(CommandSender player) {
+        try (Connection connection = Database.getConnection(false, 1000)) {
+            if (connection == null) {
+                return;
+            }
+
+            long latencyStart = System.nanoTime();
+            try (Statement statement = connection.createStatement(); ResultSet resultSet = statement.executeQuery("SELECT 1")) {
+                resultSet.next();
+            }
+            double latency = (System.nanoTime() - latencyStart) / 1000000.0;
+            Chat.sendMessage(player, Color.DARK_AQUA + Phrase.build(Phrase.STATUS_DATABASE_LATENCY, Color.WHITE, String.format("%.1f", latency)));
+
+            long size = getDatabaseSize(connection);
+            if (size > 0) {
+                Chat.sendMessage(player, Color.DARK_AQUA + Phrase.build(Phrase.STATUS_DATABASE_SIZE, Color.WHITE, formatBytes(size)));
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static long getDatabaseSize(Connection connection) {
+        if (!Config.getGlobal().MYSQL) {
+            long size = 0;
+            File databaseFile = new File(ConfigHandler.path, ConfigHandler.sqlite);
+            if (databaseFile.exists()) {
+                size = databaseFile.length();
+            }
+
+            // In WAL mode a meaningful amount of data can be sitting in the -wal file.
+            File walFile = new File(ConfigHandler.path, ConfigHandler.sqlite + "-wal");
+            if (walFile.exists()) {
+                size = size + walFile.length();
+            }
+
+            return size;
+        }
+
+        try (PreparedStatement statement = connection.prepareStatement("SELECT SUM(data_length + index_length) AS size FROM information_schema.TABLES WHERE table_schema = ?")) {
+            statement.setString(1, ConfigHandler.database);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getLong("size");
+                }
+            }
+        }
+        catch (Exception e) {
+            // information_schema isn't always readable by the configured user
+        }
+
+        return 0;
+    }
+
+    private static String formatBytes(long bytes) {
+        if (bytes >= 1073741824L) {
+            return String.format("%.1f GB", bytes / 1073741824.0);
+        }
+        if (bytes >= 1048576L) {
+            return String.format("%.1f MB", bytes / 1048576.0);
+        }
+
+        return String.format("%.1f KB", bytes / 1024.0);
     }
 }

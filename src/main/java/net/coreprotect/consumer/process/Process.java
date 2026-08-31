@@ -13,6 +13,7 @@ import org.bukkit.Material;
 import net.coreprotect.config.Config;
 import net.coreprotect.config.ConfigHandler;
 import net.coreprotect.consumer.Consumer;
+import net.coreprotect.consumer.ConsumerMetrics;
 import net.coreprotect.database.Database;
 import net.coreprotect.database.statement.UserStatement;
 import net.coreprotect.model.rollback.RollbackUpdateTargets;
@@ -125,6 +126,8 @@ public class Process {
             PreparedStatement preparedStmtBlockdata = Database.prepareStatement(connection, Database.BLOCKDATA, false);
 
             // Scan through consumer data
+            int batchSize = Config.getGlobal().BATCH_SIZE;
+            int pendingRows = 0;
             Database.beginTransaction(statement, Config.getGlobal().MYSQL);
             for (int i = 0; i < consumerDataSize; i++) {
                 Object[] data = consumerData.get(i);
@@ -240,10 +243,21 @@ public class Process {
                                 return;
                             }
 
+                            pendingRows++;
+
                             // If interrupt requested, commit data, sleep, and resume processing
                             if (Consumer.interrupt) {
-                                commit(statement, preparedStmtSigns, preparedStmtBlocks, preparedStmtSkulls, preparedStmtContainers, preparedStmtItems, preparedStmtWorlds, preparedStmtChat, preparedStmtCommand, preparedStmtSession, preparedStmtEntities, preparedStmtMaterials, preparedStmtArt, preparedStmtEntity, preparedStmtBlockdata);
+                                commit(pendingRows, statement, preparedStmtSigns, preparedStmtBlocks, preparedStmtSkulls, preparedStmtContainers, preparedStmtItems, preparedStmtWorlds, preparedStmtChat, preparedStmtCommand, preparedStmtSession, preparedStmtEntities, preparedStmtMaterials, preparedStmtArt, preparedStmtEntity, preparedStmtBlockdata);
+                                pendingRows = 0;
                                 Thread.sleep(500);
+                                Database.beginTransaction(statement, Config.getGlobal().MYSQL);
+                            }
+                            // Otherwise commit once a batch fills up, so a large burst (a WorldEdit
+                            // paste, an explosion chain) doesn't accumulate into a single enormous
+                            // transaction holding everything in memory until the queue drains.
+                            else if (batchSize > 0 && pendingRows >= batchSize) {
+                                commit(pendingRows, statement, preparedStmtSigns, preparedStmtBlocks, preparedStmtSkulls, preparedStmtContainers, preparedStmtItems, preparedStmtWorlds, preparedStmtChat, preparedStmtCommand, preparedStmtSession, preparedStmtEntities, preparedStmtMaterials, preparedStmtArt, preparedStmtEntity, preparedStmtBlockdata);
+                                pendingRows = 0;
                                 Database.beginTransaction(statement, Config.getGlobal().MYSQL);
                             }
                         }
@@ -256,7 +270,7 @@ public class Process {
             }
 
             // commit data to database
-            commit(statement, preparedStmtSigns, preparedStmtBlocks, preparedStmtSkulls, preparedStmtContainers, preparedStmtItems, preparedStmtWorlds, preparedStmtChat, preparedStmtCommand, preparedStmtSession, preparedStmtEntities, preparedStmtMaterials, preparedStmtArt, preparedStmtEntity, preparedStmtBlockdata);
+            commit(pendingRows, statement, preparedStmtSigns, preparedStmtBlocks, preparedStmtSkulls, preparedStmtContainers, preparedStmtItems, preparedStmtWorlds, preparedStmtChat, preparedStmtCommand, preparedStmtSession, preparedStmtEntities, preparedStmtMaterials, preparedStmtArt, preparedStmtEntity, preparedStmtBlockdata);
 
             // close connections/statements
             preparedStmtSigns.close();
@@ -288,7 +302,8 @@ public class Process {
         Consumer.isPaused = false;
     }
 
-    private static void commit(Statement statement, PreparedStatement preparedStmtSigns, PreparedStatement preparedStmtBlocks, PreparedStatement preparedStmtSkulls, PreparedStatement preparedStmtContainers, PreparedStatement preparedStmtItems, PreparedStatement preparedStmtWorlds, PreparedStatement preparedStmtChat, PreparedStatement preparedStmtCommand, PreparedStatement preparedStmtSession, PreparedStatement preparedStmtEntities, PreparedStatement preparedStmtMaterials, PreparedStatement preparedStmtArt, PreparedStatement preparedStmtEntity, PreparedStatement preparedStmtBlockdata) {
+    private static void commit(int rows, Statement statement, PreparedStatement preparedStmtSigns, PreparedStatement preparedStmtBlocks, PreparedStatement preparedStmtSkulls, PreparedStatement preparedStmtContainers, PreparedStatement preparedStmtItems, PreparedStatement preparedStmtWorlds, PreparedStatement preparedStmtChat, PreparedStatement preparedStmtCommand, PreparedStatement preparedStmtSession, PreparedStatement preparedStmtEntities, PreparedStatement preparedStmtMaterials, PreparedStatement preparedStmtArt, PreparedStatement preparedStmtEntity, PreparedStatement preparedStmtBlockdata) {
+        long startTime = System.nanoTime();
         try {
             preparedStmtSigns.executeBatch();
             preparedStmtBlocks.executeBatch();
@@ -309,5 +324,7 @@ public class Process {
         catch (Exception e) {
             e.printStackTrace();
         }
+
+        ConsumerMetrics.recordFlush(rows, System.nanoTime() - startTime);
     }
 }

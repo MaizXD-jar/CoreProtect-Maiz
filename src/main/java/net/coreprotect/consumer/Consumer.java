@@ -12,6 +12,7 @@ import org.bukkit.block.BlockState;
 import org.bukkit.inventory.ItemStack;
 
 import net.coreprotect.CoreProtect;
+import net.coreprotect.config.Config;
 import net.coreprotect.config.ConfigHandler;
 import net.coreprotect.consumer.process.Process;
 
@@ -128,7 +129,7 @@ public class Consumer extends Process implements Runnable, Thread.UncaughtExcept
                     process_id = 1;
                     currentConsumer = 0;
                 }
-                Thread.sleep(500);
+                Thread.sleep(Math.max(1, Config.getGlobal().FLUSH_INTERVAL));
                 pauseConsumer(process_id);
                 Process.processConsumer(process_id, lastRun);
             }

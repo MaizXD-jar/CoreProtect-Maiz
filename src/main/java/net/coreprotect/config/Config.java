@@ -98,6 +98,10 @@ public class Config extends Language {
     public int MAX_RADIUS;
     public int ROLLBACK_TIMEOUT;
     public int BUILDRESTORE_RADIUS;
+    public int MINIMUM_IDLE;
+    public int BATCH_SIZE;
+    public int FLUSH_INTERVAL;
+    public boolean CREATE_DATABASE;
 
     static {
         DEFAULT_VALUES.put("donation-key", "");
@@ -109,6 +113,7 @@ public class Config extends Language {
         DEFAULT_VALUES.put("mysql-username", "root");
         DEFAULT_VALUES.put("mysql-password", "");
         DEFAULT_VALUES.put("mysql-driver", "mysql");
+        DEFAULT_VALUES.put("create-database", "true");
         DEFAULT_VALUES.put("language", "en");
         DEFAULT_VALUES.put("auto-purge", "false");
         DEFAULT_VALUES.put("check-updates", "true");
@@ -118,6 +123,9 @@ public class Config extends Language {
         DEFAULT_VALUES.put("max-radius", "100");
         DEFAULT_VALUES.put("rollback-timeout", "1800");
         DEFAULT_VALUES.put("buildrestore-radius", "50");
+        DEFAULT_VALUES.put("batch-size", "500");
+        DEFAULT_VALUES.put("flush-interval", "500");
+        DEFAULT_VALUES.put("minimum-idle", "2");
         DEFAULT_VALUES.put("rollback-items", "true");
         DEFAULT_VALUES.put("rollback-entities", "true");
         DEFAULT_VALUES.put("skip-generic-data", "true");
@@ -157,6 +165,7 @@ public class Config extends Language {
         HEADERS.put("donation-key", new String[] { "# CoreProtect is donationware. Obtain a donation key from coreprotect.net/donate/" });
         HEADERS.put("use-mysql", new String[] { "# MySQL is optional and not required.", "# If you prefer to use MySQL, enable the following and fill out the fields." });
         HEADERS.put("mysql-driver", new String[] { "# A MariaDB server already works with use-mysql (it speaks the same protocol).", "# Set this to \"mariadb\" to instead connect using the native MariaDB driver." });
+        HEADERS.put("create-database", new String[] { "# If the MySQL/MariaDB database named above doesn't exist yet, create it on", "# startup. Requires the configured user to have the CREATE privilege." });
         HEADERS.put("language", new String[] { "# If modified, will automatically attempt to translate languages phrases.", "# List of language codes: https://coreprotect.net/languages/" });
         HEADERS.put("auto-purge", new String[] { "# Automatically purge data older than the configured time.", "# Examples: 30d, 12w, 6mo. Set to false to disable." });
         HEADERS.put("check-updates", new String[] { "# If enabled, CoreProtect will check for updates when your server starts up.", "# If an update is available, you'll be notified via your server console.", });
@@ -166,6 +175,9 @@ public class Config extends Language {
         HEADERS.put("max-radius", new String[] { "# The maximum radius that can be used in a command. Set to \"0\" to disable.", "# To run a rollback or restore without a radius, you can use \"r:#global\"." });
         HEADERS.put("rollback-timeout", new String[] { "# The maximum time (in seconds) a rollback/restore will wait per chunk before", "# aborting. Increase this if large rollbacks/restores are being cut off early." });
         HEADERS.put("buildrestore-radius", new String[] { "# Default radius used by /co buildrestore when no r: parameter is given.", "# Kept separate from default-radius since a whole-build restore usually", "# needs to cover more area than a typical single-griefer rollback." });
+        HEADERS.put("batch-size", new String[] { "# How many queued rows are written per transaction. Without this, a huge", "# WorldEdit paste would be committed as one enormous transaction; smaller", "# batches bound memory and lock time. 250-1000 is a reasonable range." });
+        HEADERS.put("flush-interval", new String[] { "# How long (in milliseconds) the consumer waits between write cycles.", "# Lower means data hits the database sooner, at the cost of more commits." });
+        HEADERS.put("minimum-idle", new String[] { "# Minimum idle MySQL/MariaDB connections kept open. Logging is a single", "# writer, so a small number is plenty - the pool grows to maximum-pool-size", "# on demand and shrinks back down when the burst is over." });
         HEADERS.put("rollback-items", new String[] { "# If enabled, items taken from containers (etc) will be included in rollbacks." });
         HEADERS.put("rollback-entities", new String[] { "# If enabled, entities, such as killed animals, will be included in rollbacks." });
         HEADERS.put("skip-generic-data", new String[] { "# If enabled, generic data, like zombies burning in daylight, won't be logged." });
@@ -233,6 +245,10 @@ public class Config extends Language {
         this.MAX_RADIUS = this.getInt("max-radius");
         this.ROLLBACK_TIMEOUT = this.getInt("rollback-timeout", 1800);
         this.BUILDRESTORE_RADIUS = this.getInt("buildrestore-radius", 50);
+        this.MINIMUM_IDLE = this.getInt("minimum-idle", 2);
+        this.BATCH_SIZE = this.getInt("batch-size", 500);
+        this.FLUSH_INTERVAL = this.getInt("flush-interval", 500);
+        this.CREATE_DATABASE = this.getBoolean("create-database", true);
         this.ROLLBACK_ITEMS = this.getBoolean("rollback-items");
         this.ROLLBACK_ENTITIES = this.getBoolean("rollback-entities");
         this.SKIP_GENERIC_DATA = this.getBoolean("skip-generic-data");
